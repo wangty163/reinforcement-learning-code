@@ -64,7 +64,7 @@ def test():
     with tf.Session() as sess:
         with tf.variable_scope('network'):
             ipt = tf.placeholder(tf.float32, shape=(None, state_dim))
-            network = neural_network.MLP(sess, ipt, [20, action_dim], ['relu', 'none'])
+            network = neural_network.MLP(sess, ipt, [20, action_dim], ['tanh', 'none'])
         net = PolicyGradient(
                 sess = sess,
                 network=network,
@@ -83,7 +83,7 @@ def test():
             observation = env.reset()
             states, actions, vt = [], [], []
             reward_sum = 0
-            for t in range(max_step_time):
+            for i in range(max_step_time):
                 if i_episode > start_learn and i_episode % render_time == 0:
                     env.render()
 
@@ -94,7 +94,7 @@ def test():
                 actions.append(action)
                 vt.append(reward)
                 observation = next_observation
-                if done or t == max_step_time - 1:
+                if done or i == max_step_time - 1:
                     # calc vt
                     t = 0
                     for i in reversed(range(len(vt))):
