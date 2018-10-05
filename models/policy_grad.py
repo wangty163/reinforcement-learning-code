@@ -82,22 +82,19 @@ def test():
         for i_episode in range(100000):
             observation = env.reset()
             states, actions, vt = [], [], []
+            reward_sum = 0
             for t in range(max_step_time):
-                if i_episode % render_time == 0:
+                if i_episode > start_learn and i_episode % render_time == 0:
                     env.render()
 
                 action = net.choose_action(observation)
                 next_observation, reward, done, info = env.step(action)
-                if 'reward_sum' not in globals():
-                    reward_sum = reward
-                else:
-                    reward_sum = reward_sum * gamma + (1 - gamma) * reward
+                reward_sum += reward
                 states.append(observation)
                 actions.append(action)
                 vt.append(reward)
                 observation = next_observation
                 if done or t == max_step_time - 1:
-                    #net.learn(observation, action, reward, next_observation, done)
                     # calc vt
                     t = 0
                     for i in reversed(range(len(vt))):
@@ -108,6 +105,7 @@ def test():
                     summary = net.learn(states, actions, vt)
                     writer.add_summary(summary, i_episode)
 
+                    # plot
                     summary = tf.Summary(value=[tf.Summary.Value(tag='finished timesteps', simple_value=t + 1)])
                     writer.add_summary(summary, i_episode)
                     summary = tf.Summary(value=[tf.Summary.Value(tag='reward_sum', simple_value=reward_sum)])
