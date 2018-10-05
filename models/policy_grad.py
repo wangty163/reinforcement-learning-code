@@ -52,7 +52,7 @@ class PolicyGradient():
         return summary
 
 def test():
-    import shutil; shutil.rmtree('/tmp/gym_logs', True)
+    import shutil; shutil.rmtree('gym_logs', True)
     import gym
     env = gym.make("CartPole-v1")
     print(env.observation_space)
@@ -75,7 +75,7 @@ def test():
         start_learn = batch_size
         render_time = 1
         max_step_time = 500
-        writer = tf.summary.FileWriter('/tmp/gym_logs', sess.graph)
+        writer = tf.summary.FileWriter('gym_logs', sess.graph)
 
         sess.run(tf.global_variables_initializer())
 
