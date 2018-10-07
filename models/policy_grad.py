@@ -1,3 +1,7 @@
+import sys
+if __name__ == '__main__':
+    sys.path.append('..')
+
 import tensorflow as tf
 import numpy as np
 
@@ -64,17 +68,17 @@ def test():
     with tf.Session() as sess:
         with tf.variable_scope('network'):
             ipt = tf.placeholder(tf.float32, shape=(None, state_dim))
-            network = neural_network.MLP(sess, ipt, [20, action_dim], ['tanh', 'none'])
+            network = neural_network.MLP(sess, ipt, [20, action_dim], ['relu', 'none'])
         net = PolicyGradient(
                 sess = sess,
                 network=network,
-                learning_rate=0.1,
+                learning_rate=0.02,
                 )
         gamma = 0.999
         batch_size = 128
         start_learn = batch_size
-        render_time = 1
-        max_step_time = 500
+        render_time = 100000
+        max_step_time = 500000
         writer = tf.summary.FileWriter('gym_logs', sess.graph)
 
         sess.run(tf.global_variables_initializer())
@@ -95,19 +99,31 @@ def test():
                 vt.append(reward)
                 observation = next_observation
                 if done or i == max_step_time - 1:
+                    # tmp plot
+                    if 'running_reward' not in locals():
+                        running_reward = sum(vt)
+                    else:
+                        running_reward = running_reward * 0.99 + sum(vt) * 0.01
+                    print('i_episode:', i_episode, 'running_reward:', running_reward, 'sum(vt):', sum(vt))
+
                     # calc vt
                     t = 0
-                    for i in reversed(range(len(vt))):
-                        t = t * gamma + vt[i]
-                        vt[i] = t
+                    for j in reversed(range(len(vt))):
+                        t = t * gamma + vt[j]
+                        vt[j] = t
+                    vt -= np.mean(vt)
+                    vt /= np.std(vt)
 
                     # learn
                     summary = net.learn(states, actions, vt)
                     writer.add_summary(summary, i_episode)
 
                     # plot
-                    summary = tf.Summary(value=[tf.Summary.Value(tag='finished timesteps', simple_value=t + 1)])
+                    summary = tf.Summary(value=[tf.Summary.Value(tag='finished timesteps', simple_value=i + 1)])
                     writer.add_summary(summary, i_episode)
                     summary = tf.Summary(value=[tf.Summary.Value(tag='reward_sum', simple_value=reward_sum)])
                     writer.add_summary(summary, i_episode)
                     break
+
+if __name__ == '__main__':
+    test()
