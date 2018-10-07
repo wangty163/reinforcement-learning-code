@@ -148,6 +148,11 @@ def test():
                     writer.add_summary(summary, i_episode)
                 observation = next_observation
                 if done or t == max_step_time - 1:
+                    if 'avg' not in locals():
+                        avg = reward_sum
+                    else:
+                        avg = 0.99 * avg + 0.01 * reward_sum
+                    print('i_episode:', i_episode, 'avg:', avg, 'reward_sum:', reward_sum)
                     summary = tf.Summary(value=[tf.Summary.Value(tag='epsilon', simple_value=net.epsilon)])
                     writer.add_summary(summary, i_episode)
                     summary = tf.Summary(value=[tf.Summary.Value(tag='finished timesteps', simple_value=t + 1)])
