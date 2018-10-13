@@ -32,6 +32,8 @@ class PolicyGradient():
             neg_log_prob = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=out_logits, labels=self.action)
             self.loss = tf.reduce_mean(neg_log_prob * self.vt)
             tf.summary.scalar('loss', self.loss)
+            tf_op.variable_summaries(neg_log_prob, 'neg_log_prob')
+            tf_op.variable_summaries(self.vt, 'vt')
 
         with tf.variable_scope('train'):
             optimizer = tf.train.AdamOptimizer(self.learning_rate)
@@ -59,6 +61,7 @@ def test():
     import shutil; shutil.rmtree('gym_logs', True)
     import gym
     env = gym.make("CartPole-v1")
+    env = env.unwrapped
     print(env.observation_space)
     print(env.action_space)
     print(env.action_space.sample())
@@ -68,16 +71,16 @@ def test():
     with tf.Session() as sess:
         with tf.variable_scope('network'):
             ipt = tf.placeholder(tf.float32, shape=(None, state_dim))
-            network = neural_network.MLP(sess, ipt, [20, action_dim], ['relu', 'none'])
+            network = neural_network.MLP(sess, ipt, [8, 4, action_dim], ['relu', 'relu', 'none'])
         net = PolicyGradient(
                 sess = sess,
                 network=network,
-                learning_rate=0.02,
+                learning_rate=0.05,
                 )
         gamma = 0.999
         batch_size = 128
         start_learn = batch_size
-        render_time = 100000
+        render_time = 1
         max_step_time = 500000
         writer = tf.summary.FileWriter('gym_logs', sess.graph)
 
@@ -104,7 +107,7 @@ def test():
                         running_reward = sum(vt)
                     else:
                         running_reward = running_reward * 0.99 + sum(vt) * 0.01
-                    print('i_episode:', i_episode, 'running_reward:', running_reward, 'sum(vt):', sum(vt))
+                    #print('i_episode:', i_episode, 'running_reward:', running_reward, 'sum(vt):', sum(vt))
 
                     # calc vt
                     t = 0
